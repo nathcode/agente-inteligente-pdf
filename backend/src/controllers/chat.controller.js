@@ -5,8 +5,8 @@ class ChatController {
         const { message, threadId, assistantId } = req.body;
 
         if (!message) {
-            return res.status(400).json({ 
-                error: 'El mensaje no puede estar vacío' 
+            return res.status(400).json({
+                error: 'El mensaje no puede estar vacío'
             });
         }
 
@@ -19,7 +19,7 @@ class ChatController {
             }
 
             await openaiService.addMessage(currentThreadId, message);
-            await openaiService.runAssistant(currentThreadId, assistantId);
+            await openaiService.runAssistant(currentThreadId, assistantId || openaiService.assistantId);
 
             const messages = await openaiService.getMessages(currentThreadId);
             const assistantMessage = messages.data.find(m => m.role === 'assistant');
@@ -28,7 +28,7 @@ class ChatController {
                 throw new Error('No se recibió respuesta del asistente');
             }
 
-            res.json({ 
+            res.json({
                 response: assistantMessage.content[0].text.value,
                 threadId: currentThreadId,
                 timestamp: new Date().toISOString()
@@ -44,30 +44,30 @@ class ChatController {
     }
 
     async getConfig(req, res) {
-        res.json({
-            assistantId: openaiService.assistantId,
-            model: 'gpt-3.5-turbo',
-            status: 'ok'
-        });
+        res.json(openaiService.getConfig());
     }
 
     async updateAssistant(req, res) {
         const { assistantId } = req.body;
-        
+
         if (!assistantId) {
             return res.status(400).json({
-                error: 'Se requiere el ID del asistente'
+                error: 'Se requiere el identificador del asistente o del modelo'
             });
         }
 
         try {
-            const assistant = await openaiService.getAssistant(assistantId);
+            let assistant = { name: assistantId };
+            if (openaiService.provider === 'openai') {
+                assistant = await openaiService.getAssistant(assistantId);
+            }
+
             await openaiService.updateAssistantId(assistantId);
-            
+
             res.json({
-                message: 'Asistente actualizado correctamente',
+                message: 'Configuración actualizada correctamente',
                 assistantId: assistantId,
-                assistantName: assistant.name
+                assistantName: assistant.name || assistantId
             });
         } catch (error) {
             console.error('Error al actualizar el asistente:', error);

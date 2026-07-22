@@ -11,6 +11,7 @@ function App() {
     const [threadId, setThreadId] = useState(null);
     const [assistantId, setAssistantId] = useState('');
     const [currentAssistant, setCurrentAssistant] = useState(null);
+    const [provider, setProvider] = useState('openai');
     const [showAssistantConfig, setShowAssistantConfig] = useState(false);
 
     // Cargar la configuración inicial
@@ -18,8 +19,10 @@ function App() {
         const loadConfig = async () => {
             try {
                 const config = await chatService.getConfig();
-                setAssistantId(config.assistantId);
-                setCurrentAssistant(config.assistantId);
+                const selectedModel = config.assistantId || config.model || '';
+                setAssistantId(selectedModel);
+                setCurrentAssistant(selectedModel);
+                setProvider(config.provider || 'openai');
             } catch (error) {
                 console.error('Error al cargar la configuración:', error);
                 setMessages([{
@@ -37,14 +40,14 @@ function App() {
 
         try {
             const response = await chatService.updateAssistant(assistantId.trim());
-            setCurrentAssistant(assistantId);
+            setCurrentAssistant(assistantId.trim());
             setShowAssistantConfig(false);
             setMessages([]);
             setThreadId(null);
 
             setMessages([{
                 role: 'assistant',
-                content: `Asistente actualizado a: ${response.assistantName}`
+                content: `Configuración actualizada a: ${response.assistantName}`
             }]);
         } catch (error) {
             console.error('Error al actualizar el asistente:', error);
@@ -98,7 +101,7 @@ function App() {
                     className="config-button"
                     onClick={() => setShowAssistantConfig(!showAssistantConfig)}
                 >
-                    {showAssistantConfig ? 'Cerrar Configuración' : 'Configurar Asistente'}
+                    {showAssistantConfig ? 'Cerrar Configuración' : provider === 'ollama' ? 'Configurar Modelo' : 'Configurar Asistente'}
                 </button>
             </header>
 
@@ -107,6 +110,7 @@ function App() {
                     assistantId={assistantId}
                     setAssistantId={setAssistantId}
                     currentAssistant={currentAssistant}
+                    provider={provider}
                     onSubmit={handleAssistantChange}
                     onClose={() => setShowAssistantConfig(false)}
                 />
