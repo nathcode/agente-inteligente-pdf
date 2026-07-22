@@ -9,8 +9,8 @@ function App() {
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [threadId, setThreadId] = useState(null);
-    const [assistantId, setAssistantId] = useState('');
-    const [currentAssistant, setCurrentAssistant] = useState(null);
+    const [modelName, setModelName] = useState('');
+    const [currentModel, setCurrentModel] = useState(null);
     const [provider, setProvider] = useState('openai');
     const [showAssistantConfig, setShowAssistantConfig] = useState(false);
 
@@ -19,9 +19,9 @@ function App() {
         const loadConfig = async () => {
             try {
                 const config = await chatService.getConfig();
-                const selectedModel = config.assistantId || config.model || '';
-                setAssistantId(selectedModel);
-                setCurrentAssistant(selectedModel);
+                const selectedModel = config.model || '';
+                setModelName(selectedModel);
+                setCurrentModel(selectedModel);
                 setProvider(config.provider || 'openai');
             } catch (error) {
                 console.error('Error al cargar la configuración:', error);
@@ -34,26 +34,26 @@ function App() {
         loadConfig();
     }, []);
 
-    const handleAssistantChange = async (e) => {
+    const handleModelChange = async (e) => {
         e.preventDefault();
-        if (!assistantId.trim()) return;
+        if (!modelName.trim()) return;
 
         try {
-            const response = await chatService.updateAssistant(assistantId.trim());
-            setCurrentAssistant(assistantId.trim());
+            await chatService.updateModel(modelName.trim());
+            setCurrentModel(modelName.trim());
             setShowAssistantConfig(false);
             setMessages([]);
             setThreadId(null);
 
             setMessages([{
                 role: 'assistant',
-                content: `Configuración actualizada a: ${response.assistantName}`
+                content: `Modelo actualizado a: ${modelName.trim()}`
             }]);
         } catch (error) {
-            console.error('Error al actualizar el asistente:', error);
+            console.error('Error al actualizar el modelo:', error);
             setMessages([{
                 role: 'assistant',
-                content: 'Error al actualizar el asistente. Por favor, verifica el ID e intenta de nuevo.'
+                content: 'Error al actualizar el modelo. Por favor, verifica el nombre e intenta de nuevo.'
             }]);
         }
     };
@@ -71,7 +71,7 @@ function App() {
             const response = await chatService.sendMessage(
                 userMessage,
                 threadId,
-                currentAssistant
+                currentModel
             );
 
             if (!threadId && response.threadId) {
@@ -101,17 +101,17 @@ function App() {
                     className="config-button"
                     onClick={() => setShowAssistantConfig(!showAssistantConfig)}
                 >
-                    {showAssistantConfig ? 'Cerrar Configuración' : provider === 'ollama' ? 'Configurar Modelo' : 'Configurar Asistente'}
+                    {showAssistantConfig ? 'Cerrar Configuración' : 'Configurar Modelo'}
                 </button>
             </header>
 
             {showAssistantConfig && (
                 <AssistantConfig
-                    assistantId={assistantId}
-                    setAssistantId={setAssistantId}
-                    currentAssistant={currentAssistant}
+                    modelName={modelName}
+                    setModelName={setModelName}
+                    currentModel={currentModel}
                     provider={provider}
-                    onSubmit={handleAssistantChange}
+                    onSubmit={handleModelChange}
                     onClose={() => setShowAssistantConfig(false)}
                 />
             )}

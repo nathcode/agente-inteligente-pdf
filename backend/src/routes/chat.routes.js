@@ -9,6 +9,7 @@ router.get('/health', (req, res) => {
 
 // Rutas de configuración
 router.get('/config', chatController.getConfig);
+router.post('/config/model', chatController.updateModel);
 router.post('/config/assistant', chatController.updateAssistant);
 
 // Ruta principal del chat

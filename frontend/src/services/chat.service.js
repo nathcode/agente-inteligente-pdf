@@ -2,12 +2,12 @@ import axios from 'axios';
 import { API_ENDPOINTS } from '../config/api.config';
 
 class ChatService {
-    async sendMessage(message, threadId, assistantId) {
+    async sendMessage(message, threadId, model) {
         try {
             const response = await axios.post(API_ENDPOINTS.chat, {
                 message,
                 threadId,
-                assistantId
+                model
             });
             return response.data;
         } catch (error) {
@@ -24,10 +24,10 @@ class ChatService {
         }
     }
 
-    async updateAssistant(assistantId) {
+    async updateModel(model) {
         try {
             const response = await axios.post(API_ENDPOINTS.updateAssistant, {
-                assistantId
+                model
             });
             return response.data;
         } catch (error) {

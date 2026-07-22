@@ -1,50 +1,50 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const AssistantConfig = ({ 
-    assistantId, 
-    setAssistantId, 
-    currentAssistant, 
-    provider, 
-    onSubmit, 
-    onClose 
+const AssistantConfig = ({
+    modelName,
+    setModelName,
+    currentModel,
+    provider,
+    onSubmit,
+    onClose
 }) => {
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (!assistantId.trim()) return;
+        if (!modelName.trim()) return;
         onSubmit(e);
     };
 
     const placeholder = provider === 'ollama'
         ? 'Modelo de Ollama (ej. llama3.2)'
-        : 'ID del asistente de OpenAI';
-    const submitLabel = provider === 'ollama' ? 'Actualizar modelo' : 'Actualizar Asistente';
-    const currentLabel = provider === 'ollama' ? 'Modelo actual:' : 'Asistente actual:';
+        : 'Modelo de OpenAI (ej. gpt-4o-mini)';
+    const submitLabel = 'Guardar modelo';
+    const currentLabel = 'Modelo actual:';
 
     return (
         <div className="assistant-config">
             <form onSubmit={handleSubmit}>
                 <input
                     type="text"
-                    value={assistantId}
-                    onChange={(e) => setAssistantId(e.target.value)}
+                    value={modelName}
+                    onChange={(e) => setModelName(e.target.value)}
                     placeholder={placeholder}
                     className="assistant-input"
                 />
                 <button type="submit" className="config-submit-button">
                     {submitLabel}
                 </button>
-                <button 
-                    type="button" 
+                <button
+                    type="button"
                     onClick={onClose}
                     className="config-close-button"
                 >
                     Cerrar
                 </button>
             </form>
-            {currentAssistant && (
+            {currentModel && (
                 <p className="current-assistant">
-                    {currentLabel} {currentAssistant}
+                    {currentLabel} {currentModel}
                 </p>
             )}
         </div>
@@ -52,9 +52,9 @@ const AssistantConfig = ({
 };
 
 AssistantConfig.propTypes = {
-    assistantId: PropTypes.string.isRequired,
-    setAssistantId: PropTypes.func.isRequired,
-    currentAssistant: PropTypes.string,
+    modelName: PropTypes.string.isRequired,
+    setModelName: PropTypes.func.isRequired,
+    currentModel: PropTypes.string,
     provider: PropTypes.string,
     onSubmit: PropTypes.func.isRequired,
     onClose: PropTypes.func.isRequired

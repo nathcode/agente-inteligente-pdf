@@ -2,7 +2,7 @@ const openaiService = require('../services/openai.service');
 
 class ChatController {
     async handleChat(req, res) {
-        const { message, threadId, assistantId } = req.body;
+        const { message, threadId, model } = req.body;
 
         if (!message) {
             return res.status(400).json({
@@ -19,13 +19,13 @@ class ChatController {
             }
 
             await openaiService.addMessage(currentThreadId, message);
-            await openaiService.runAssistant(currentThreadId, assistantId || openaiService.assistantId);
+            await openaiService.runAssistant(currentThreadId, model || openaiService.model);
 
             const messages = await openaiService.getMessages(currentThreadId);
             const assistantMessage = messages.data.find(m => m.role === 'assistant');
 
             if (!assistantMessage) {
-                throw new Error('No se recibió respuesta del asistente');
+                throw new Error('No se recibió respuesta del modelo');
             }
 
             res.json({
@@ -47,35 +47,34 @@ class ChatController {
         res.json(openaiService.getConfig());
     }
 
-    async updateAssistant(req, res) {
-        const { assistantId } = req.body;
+    async updateModel(req, res) {
+        const { model } = req.body;
 
-        if (!assistantId) {
+        if (!model) {
             return res.status(400).json({
-                error: 'Se requiere el identificador del asistente o del modelo'
+                error: 'Se requiere el nombre del modelo'
             });
         }
 
         try {
-            let assistant = { name: assistantId };
-            if (openaiService.provider === 'openai') {
-                assistant = await openaiService.getAssistant(assistantId);
-            }
-
-            await openaiService.updateAssistantId(assistantId);
+            await openaiService.updateModel(model);
 
             res.json({
-                message: 'Configuración actualizada correctamente',
-                assistantId: assistantId,
-                assistantName: assistant.name || assistantId
+                message: 'Modelo actualizado correctamente',
+                model,
+                modelName: model
             });
         } catch (error) {
-            console.error('Error al actualizar el asistente:', error);
+            console.error('Error al actualizar el modelo:', error);
             res.status(400).json({
-                error: 'Error al actualizar el asistente',
+                error: 'Error al actualizar el modelo',
                 details: error.message
             });
         }
+    }
+
+    async updateAssistant(req, res) {
+        return this.updateModel(req, res);
     }
 }
 
