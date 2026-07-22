@@ -31,17 +31,18 @@ class OpenAIService {
     }
 
     _buildOllamaMessages(threadMessages) {
-        // Se construye un historial compatible con Ollama.
-        // El primer mensaje es una instrucción del sistema para guiar la respuesta.
+        // Para evitar respuestas repetidas, se envía al modelo una instrucción fija y sólo el último mensaje del usuario.
+        const lastUserMessage = [...threadMessages].reverse().find(message => message.role === 'user');
+
         return [
             {
                 role: 'system',
-                content: 'Responde de forma breve, natural y útil a la pregunta del usuario. No repitas saludos genéricos ni respuestas predefinidas.'
+                content: 'Responde a la última pregunta del usuario de forma breve, natural y útil. No repitas saludos ni respuestas fijas.'
             },
-            ...threadMessages.map(message => ({
-                role: message.role === 'user' ? 'user' : 'assistant',
-                content: message.content
-            }))
+            {
+                role: 'user',
+                content: lastUserMessage ? lastUserMessage.content : 'Hola'
+            }
         ];
     }
 
