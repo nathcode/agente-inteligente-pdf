@@ -31,19 +31,24 @@ class OpenAIService {
     }
 
     _buildOllamaMessages(threadMessages) {
-        // Para evitar respuestas repetidas, se envía al modelo una instrucción fija y sólo el último mensaje del usuario.
-        const lastUserMessage = [...threadMessages].reverse().find(message => message.role === 'user');
-
-        return [
+        // Se manda al modelo un contexto breve con la conversación reciente.
+        // Esto permite que recuerde lo que se habló antes sin saturar el prompt.
+        const recentMessages = threadMessages.slice(-8);
+        const ollamaMessages = [
             {
                 role: 'system',
-                content: 'Responde a la última pregunta del usuario de forma breve, natural y útil. No repitas saludos ni respuestas fijas.'
-            },
-            {
-                role: 'user',
-                content: lastUserMessage ? lastUserMessage.content : 'Hola'
+                content: 'Actúa como un asistente conversacional. Recuerda el contexto reciente y responde de forma natural, breve y útil.'
             }
         ];
+
+        recentMessages.forEach(message => {
+            ollamaMessages.push({
+                role: message.role === 'user' ? 'user' : 'assistant',
+                content: message.content
+            });
+        });
+
+        return ollamaMessages;
     }
 
     async createThread() {
