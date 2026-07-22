@@ -23,10 +23,26 @@ class OpenAIService {
     }
 
     _buildOpenAIChatMessages(threadMessages) {
+        // Formato que OpenAI espera para el historial del chat.
         return threadMessages.map(message => ({
             role: message.role === 'user' ? 'user' : 'assistant',
             content: message.content
         }));
+    }
+
+    _buildOllamaMessages(threadMessages) {
+        // Se construye un historial compatible con Ollama.
+        // El primer mensaje es una instrucción del sistema para guiar la respuesta.
+        return [
+            {
+                role: 'system',
+                content: 'Responde de forma breve, natural y útil a la pregunta del usuario. No repitas saludos genéricos ni respuestas predefinidas.'
+            },
+            ...threadMessages.map(message => ({
+                role: message.role === 'user' ? 'user' : 'assistant',
+                content: message.content
+            }))
+        ];
     }
 
     async createThread() {
@@ -50,11 +66,13 @@ class OpenAIService {
                 throw new Error('OpenAI no está configurado. Define OPENAI_API_KEY o usa LLM_PROVIDER=ollama.');
             }
 
+            // Se envía al modelo de OpenAI el historial del chat en el formato esperado.
             const completion = await this.client.chat.completions.create({
                 model: modelName,
                 messages: this._buildOpenAIChatMessages(threadMessages)
             });
 
+            // Se recibe la respuesta del modelo y se guarda para el siguiente turno.
             const assistantReply = completion.choices?.[0]?.message?.content || '';
             threadMessages.push({ role: 'assistant', content: assistantReply });
             this.messages.set(threadId, threadMessages);
@@ -62,16 +80,13 @@ class OpenAIService {
             return { status: 'completed', response: assistantReply };
         }
 
-        const prompt = threadMessages
-            .map(message => `${message.role === 'user' ? 'Usuario' : 'Asistente'}: ${message.content}`)
-            .join('\n');
-
-        const response = await fetch(`${this.baseUrl.replace(/\/$/, '')}/api/generate`, {
+        // Se envía al servidor de Ollama un cuerpo con el modelo, el historial y la instrucción del sistema.
+        const response = await fetch(`${this.baseUrl.replace(/\/$/, '')}/api/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 model: modelName,
-                prompt,
+                messages: this._buildOllamaMessages(threadMessages),
                 stream: false,
                 keep_alive: config.llm.keepAlive
             })
@@ -82,8 +97,9 @@ class OpenAIService {
             throw new Error(`Error de Ollama: ${errorText}`);
         }
 
+        // Se recibe la respuesta de Ollama y se extrae el contenido del mensaje.
         const data = await response.json();
-        const assistantReply = data.response || '';
+        const assistantReply = data.message?.content || data.response || '';
         threadMessages.push({ role: 'assistant', content: assistantReply });
         this.messages.set(threadId, threadMessages);
 
