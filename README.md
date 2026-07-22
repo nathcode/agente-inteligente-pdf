@@ -1,6 +1,6 @@
-# Chatbotia - Chat de Soporte Interno
+# Chatboot - Agente Inteligente!
 
-Aplicación de chat de soporte interno compatible con OpenAI y Ollama para generar respuestas automáticas.
+Aplicación de mensajeria chatboot compatible con OpenAI y Ollama para generar respuestas automáticas.
 
 ## Estructura del Proyecto
 
