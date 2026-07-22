@@ -22,7 +22,7 @@ class ChatController {
             await openaiService.runAssistant(currentThreadId, model || openaiService.model);
 
             const messages = await openaiService.getMessages(currentThreadId);
-            const assistantMessage = messages.data.find(m => m.role === 'assistant');
+            const assistantMessage = [...messages.data].reverse().find(m => m.role === 'assistant');
 
             if (!assistantMessage) {
                 throw new Error('No se recibió respuesta del modelo');
